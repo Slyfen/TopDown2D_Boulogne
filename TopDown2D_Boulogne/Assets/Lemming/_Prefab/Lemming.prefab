@@ -12,9 +12,10 @@ GameObject:
   - component: {fileID: 7589918535840736493}
   - component: {fileID: -5118608457110252942}
   - component: {fileID: 691056398426348294}
-  m_Layer: 0
+  - component: {fileID: 941662432}
+  m_Layer: 6
   m_Name: Lemming
-  m_TagString: Untagged
+  m_TagString: Lemming
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -76,7 +77,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -102,11 +103,11 @@ Rigidbody2D:
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: aab1f0dc0a01ef64baf9c92ef949ff86, type: 2}
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 4
 --- !u!61 &691056398426348294
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -133,3 +134,21 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 1, y: 1}
   m_EdgeRadius: 0
+--- !u!114 &941662432
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7589918535840736490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a3b4eca29f99b24f84e2a84ebd8f6df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentState: 0
+  idleColor: {r: 1, g: 1, b: 1, a: 1}
+  fallingColor: {r: 1, g: 0.8909172, b: 0, a: 1}
+  walkRColor: {r: 1, g: 0, b: 0, a: 1}
+  walkLColor: {r: 0.028913021, g: 0, b: 1, a: 1}
+  stopColor: {r: 0, g: 0, b: 0, a: 1}

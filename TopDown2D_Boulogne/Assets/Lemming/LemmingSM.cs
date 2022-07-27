@@ -9,6 +9,7 @@ public class LemmingSM : MonoBehaviour
         IDLE,
         FALLING,
         WALK_RIGHT,
+        WALK_LEFT,
         STOP
 
     }
@@ -18,11 +19,14 @@ public class LemmingSM : MonoBehaviour
     [SerializeField] Color idleColor;
     [SerializeField] Color fallingColor;
     [SerializeField] Color walkRColor;
+    [SerializeField] Color walkLColor;
     [SerializeField] Color stopColor;
 
 
     Rigidbody2D rb2d;
     SpriteRenderer sr;
+
+    bool right = true;
 
 
     // Start is called before the first frame update
@@ -57,12 +61,17 @@ public class LemmingSM : MonoBehaviour
                 break;
             case LemmingState.WALK_RIGHT:
                 sr.color = walkRColor;
-                rb2d.velocity = new Vector2(3f, 0); 
+                
                 break;
-
+            case LemmingState.WALK_LEFT:
+                sr.color = walkLColor;
+                
+                break;
             case LemmingState.STOP:
                 sr.color = stopColor;
                 rb2d.velocity = new Vector2(0f, 0);
+                gameObject.layer = 7;
+                rb2d.constraints = RigidbodyConstraints2D.FreezeAll;
                 break;
             default:
                 break;
@@ -82,6 +91,12 @@ public class LemmingSM : MonoBehaviour
                     TransitionToState(LemmingState.FALLING);
                 }
 
+                // TO WALK RIGHT
+                if(rb2d.velocity.y == 0)
+                {
+                    TransitionToState(LemmingState.WALK_RIGHT); 
+                }
+
                 break;
 
 
@@ -93,13 +108,15 @@ public class LemmingSM : MonoBehaviour
                 // TO WALK RIGHT
                 if(rb2d.velocity.y == 0)
                 {
-                    TransitionToState(LemmingState.WALK_RIGHT);
+                    TransitionToState(right ? LemmingState.WALK_RIGHT : LemmingState.WALK_LEFT);
                 }
 
 
                 break;
 
             case LemmingState.WALK_RIGHT:
+
+                rb2d.velocity = new Vector2(3f, rb2d.velocity.y);
 
                 // TO FALLING
                 if (rb2d.velocity.y < 0)
@@ -121,6 +138,17 @@ public class LemmingSM : MonoBehaviour
 
                 break;
 
+
+            case LemmingState.WALK_LEFT:
+                rb2d.velocity = new Vector2(-3f, rb2d.velocity.y);
+
+                // TO FALLING
+                if (rb2d.velocity.y < 0)
+                {
+                    TransitionToState(LemmingState.FALLING);
+                }
+                break;
+
             case LemmingState.STOP:
                 
                 break;
@@ -136,13 +164,76 @@ public class LemmingSM : MonoBehaviour
     // QUAND JE QUITTE UN ETAT
     void OnStateExit()
     {
-        
+        switch (currentState)
+        {
+            case LemmingState.IDLE:
+                break;
+            case LemmingState.FALLING:
+                break;
+            case LemmingState.WALK_RIGHT:
+                break;
+            case LemmingState.WALK_LEFT:
+                break;
+            case LemmingState.STOP:
+                gameObject.layer = 6;
+                rb2d.constraints = RigidbodyConstraints2D.FreezeRotation;
+                break;
+            default:
+                break;
+        }
     }
 
     private void OnMouseDown()
     {
         //SWITCH
+        switch (currentState)
+        {
+            case LemmingState.IDLE:
+                break;
+            case LemmingState.FALLING:
+                break;
+            case LemmingState.WALK_RIGHT:
+            case LemmingState.WALK_LEFT:
 
+                //if (right)
+                //    right = false;
+
+                //else
+                //    right = true;
+
+
+
+                TransitionToState(LemmingState.STOP);
+
+
+                break;
+
+
+
+
+
+            case LemmingState.STOP:
+
+                right = !right;
+
+                //if(right)
+                //{
+                //    TransitionToState(LemmingState.WALK_RIGHT);
+
+                //} else
+                //{
+                //    TransitionToState(LemmingState.WALK_LEFT);
+                //}
+
+                TransitionToState(right ? LemmingState.WALK_RIGHT : LemmingState.WALK_LEFT);
+                
+               
+
+
+                break;
+            default:
+                break;
+        }
         //SI ON EST DANS L'ETAT WALK R OU WALK L
 
         //ON VA DANS L'ETAT STOP
@@ -160,6 +251,33 @@ public class LemmingSM : MonoBehaviour
         // JE RENTRE DANS MON NOUVEL ETAT
         OnStateEnter();
 
+    }
+
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if(collision.gameObject.tag == "Lemming")
+        {
+            switch (currentState)
+            {
+                case LemmingState.IDLE:
+                    break;
+                case LemmingState.FALLING:
+                    break;
+                case LemmingState.WALK_RIGHT:
+                    right = false;
+                    TransitionToState(LemmingState.WALK_LEFT);
+                    break;
+                case LemmingState.WALK_LEFT:
+                    right = true;
+                    TransitionToState(LemmingState.WALK_RIGHT);
+                    break;
+                case LemmingState.STOP:
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
 
