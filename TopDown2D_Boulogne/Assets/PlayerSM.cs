@@ -1,14 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Tilemaps;
 
 public class PlayerSM : MonoBehaviour
 {
+    [Header("STATE")]
+    public PlayerState currentState;
+
+    [Header("ANIMATIONS")]
     [SerializeField] AnimationClip rollClip;
     [SerializeField] Animator animator;
+
+    [Header("SPEED")]
     [SerializeField] float speed = 5f;
     [SerializeField] float sprintSpeed = 10f;
     [SerializeField] float rollSpeed = 10f;
+    [SerializeField] float speedWater = 2.5f;
+
+    [Header("WATER SETTINGS")]
+    [SerializeField] ParticleSystem waterFx;
+    [SerializeField] SpriteMask spriteMask;
+    [SerializeField] List<Sprite> spriteMaskAnim;
+
+  
+
+
 
     Vector2 dirInput;
     Vector2 rollDirection;
@@ -16,15 +33,19 @@ public class PlayerSM : MonoBehaviour
 
     Rigidbody2D rb2D;
 
+
+
     public enum PlayerState
     {
         IDLE,
         RUN,
         SPRINT,
-        ROLL
+        ROLL,
+        WATER
     }
 
-    public PlayerState currentState;
+    bool isInWater;
+
 
 
     // Start is called before the first frame update
@@ -33,6 +54,10 @@ public class PlayerSM : MonoBehaviour
         currentState = PlayerState.IDLE;
         rb2D = GetComponent<Rigidbody2D>();
         OnStateEnter();
+
+        
+
+
     }
 
     // Update is called once per frame
@@ -40,7 +65,7 @@ public class PlayerSM : MonoBehaviour
     {
         dirInput = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-        if(dirInput != Vector2.zero && currentState != PlayerState.ROLL)
+        if (dirInput != Vector2.zero && currentState != PlayerState.ROLL)
         {
             animator.SetFloat("InputX", dirInput.x);
             animator.SetFloat("InputY", dirInput.y);
@@ -88,19 +113,19 @@ public class PlayerSM : MonoBehaviour
 
         switch (currentState)
         {
-            
+
 
             case PlayerState.IDLE:
 
                 // TO RUN OR SPRINT
                 if (dirInput.magnitude != 0)
                 {
-                    TransitionToState(Input.GetKey(KeyCode.LeftShift) ? PlayerState.SPRINT :  PlayerState.RUN);
+                    TransitionToState(Input.GetKey(KeyCode.LeftShift) ? PlayerState.SPRINT : PlayerState.RUN);
 
                 }
 
                 // TO ROLL
-                if(Input.GetKeyDown(KeyCode.Space))
+                if (Input.GetKeyDown(KeyCode.Space) && !isInWater)
                 {
                     TransitionToState(PlayerState.ROLL);
                 }
@@ -118,13 +143,13 @@ public class PlayerSM : MonoBehaviour
                 }
 
                 // TO SPRINT
-                if(Input.GetKeyDown(KeyCode.LeftShift))
+                if (Input.GetKeyDown(KeyCode.LeftShift))
                 {
                     TransitionToState(PlayerState.SPRINT);
                 }
 
                 // TO ROLL
-                if (Input.GetKeyDown(KeyCode.Space))
+                if (Input.GetKeyDown(KeyCode.Space) && !isInWater)
                 {
                     TransitionToState(PlayerState.ROLL);
                 }
@@ -141,8 +166,8 @@ public class PlayerSM : MonoBehaviour
                     break;
                 }
 
-                // TO SPRINT
-                if (!Input.GetKey(KeyCode.LeftShift))
+                // TO RUN
+                if (!Input.GetKey(KeyCode.LeftShift) || isInWater)
                 {
                     TransitionToState(PlayerState.RUN);
                     break;
@@ -155,11 +180,30 @@ public class PlayerSM : MonoBehaviour
                 }
 
 
+
+
                 break;
 
             case PlayerState.ROLL:
 
-                
+
+                break;
+
+            case PlayerState.WATER:
+
+                //if(dirInput.magnitude == 0)
+                //{
+                //    animator.SetBool("IDLE", true);
+                //    animator.SetBool("RUN", false);
+                //}
+
+                //else
+                //{
+                //    animator.SetBool("IDLE", false);
+                //    animator.SetBool("RUN", true);
+                //}
+
+
                 break;
 
             default:
@@ -173,10 +217,15 @@ public class PlayerSM : MonoBehaviour
         switch (currentState)
         {
             case PlayerState.IDLE:
-                
+
                 break;
             case PlayerState.RUN:
-                rb2D.velocity = dirInput.normalized * speed;
+
+                if(!isInWater)
+                    rb2D.velocity = dirInput.normalized * speed;
+                else
+                    rb2D.velocity = dirInput.normalized * speedWater;
+
                 break;
 
             case PlayerState.SPRINT:
@@ -187,6 +236,11 @@ public class PlayerSM : MonoBehaviour
 
             case PlayerState.ROLL:
                 rb2D.velocity = rollDirection.normalized * rollSpeed;
+                break;
+
+            case PlayerState.WATER:
+                rb2D.velocity = dirInput.normalized * speedWater;
+
                 break;
 
 
@@ -225,13 +279,70 @@ public class PlayerSM : MonoBehaviour
         OnStateEnter();
     }
 
-
-    IEnumerator WaitForRoll() 
+    IEnumerator WaitForRoll()
     {
 
         yield return new WaitForSeconds(rollClip.length);
         TransitionToState(PlayerState.IDLE);
-    
+
     }
+
+
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        
+
+
+        if (collision.gameObject.tag == "Water")
+        {
+            //TransitionToState(PlayerState.WATER);
+            isInWater = true;
+            waterFx.Play();
+            
+            StopAllCoroutines();
+            StartCoroutine(StartWater());
+        }
+    }
+
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.gameObject.tag == "Water")
+        {
+            //TransitionToState(PlayerState.IDLE);
+            isInWater = false;
+            
+            StopAllCoroutines();
+            StartCoroutine(StopWater());
+        }
+    }
+
+    IEnumerator StopWater()
+    {
+        for (int i = spriteMaskAnim.Count - 1; i >= 0 ; i--)
+        {
+            spriteMask.sprite = spriteMaskAnim[i];
+            yield return new WaitForSeconds(.1f);
+        }
+
+        spriteMask.enabled = false;
+        waterFx.Stop();
+
+    }
+
+    IEnumerator StartWater()
+    {
+        spriteMask.enabled = true;
+
+        for (int i = 0; i < spriteMaskAnim.Count; i++)
+        {
+            spriteMask.sprite = spriteMaskAnim[i];
+            yield return new WaitForSeconds(.25f);
+        }
+
+        
+
+    }
+
 
 }
