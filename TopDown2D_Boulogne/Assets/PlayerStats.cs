@@ -12,6 +12,7 @@ public class PlayerStats : MonoBehaviour
     public void AddGold(int amount)
     {
         gold += amount;
-        goldText.text = gold.ToString();
+        goldText.text = "Score = " + gold.ToString();
+        goldText.text = $"Score = {gold}";
     }
 }
